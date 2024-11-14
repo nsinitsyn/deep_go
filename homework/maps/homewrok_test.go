@@ -9,32 +9,142 @@ import (
 
 // go test -v homework_test.go
 
+type node struct {
+	left  *node
+	right *node
+	key   int
+	value int
+}
+
+func find(n *node, key int) (*node, bool) {
+	if n == nil {
+		return nil, false
+	}
+	if n.key == key {
+		return n, true
+	}
+
+	if key < n.key {
+		return find(n.left, key)
+	}
+	return find(n.right, key)
+}
+
+func traversalDFS(n *node, action func(int, int)) {
+	if n == nil {
+		return
+	}
+
+	traversalDFS(n.left, action)
+	action(n.key, n.value)
+	traversalDFS(n.right, action)
+}
+
+func insert(n *node, key int, value int) {
+	if key < n.key {
+		if n.left == nil {
+			n.left = &node{key: key, value: value}
+		} else {
+			insert(n.left, key, value)
+		}
+	} else if key > n.key {
+		if n.right == nil {
+			n.right = &node{key: key, value: value}
+		} else {
+			insert(n.right, key, value)
+		}
+	}
+}
+
+func findMin(n *node) *node {
+	min := n
+	for min.left != nil {
+		min = min.left
+	}
+	return min
+}
+
+func remove(r *node, pointer **node) {
+	if r.left == nil && r.right == nil {
+		*pointer = nil
+		return
+	}
+
+	if r.left != nil && r.right == nil {
+		*pointer = r.left
+		return
+	}
+
+	if r.left == nil && r.right != nil {
+		*pointer = r.right
+		return
+	}
+
+	min := findMin(r.right)
+	*pointer = min
+}
+
+func findForRemove(n *node, key int) (r *node, pointer **node, found bool) {
+	cur := n
+	var p **node = nil
+	for cur != nil {
+		if key == cur.key {
+			return cur, p, true
+		}
+		if key < cur.key {
+			p = &cur.left
+			cur = cur.left
+			continue
+		}
+		if key > cur.key {
+			p = &cur.right
+			cur = cur.right
+			continue
+		}
+	}
+	return cur, p, false
+}
+
 type OrderedMap struct {
-	// need to implement
+	root *node
+	size int
 }
 
 func NewOrderedMap() OrderedMap {
-	return OrderedMap{} // need to implement
+	return OrderedMap{nil, 0}
 }
 
 func (m *OrderedMap) Insert(key, value int) {
-	// need to implement
+	m.size++
+	if m.root == nil {
+		m.root = &node{key: key, value: value}
+		return
+	}
+	insert(m.root, key, value)
 }
 
 func (m *OrderedMap) Erase(key int) {
-	// need to implement
+	if m.root == nil {
+		return
+	}
+	r, pointer, ok := findForRemove(m.root, key)
+	if ok {
+		remove(r, pointer)
+		m.size--
+	}
 }
 
 func (m *OrderedMap) Contains(key int) bool {
-	return false // need to implement
+	_, found := find(m.root, key)
+	return found
 }
 
 func (m *OrderedMap) Size() int {
-	return 0 // need to implement
+	return m.size
 }
 
 func (m *OrderedMap) ForEach(action func(int, int)) {
-	// need to implement
+	traversalDFS(m.root, action)
 }
 
 func TestCircularQueue(t *testing.T) {
